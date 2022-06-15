@@ -37,11 +37,19 @@ bool init() {
 }
 
 SDL_Surface* loadSurface(std::string path) {
+	SDL_Surface* optimizedSurface = NULL;
+
 	SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
 	if(loadedSurface == NULL) {
 		printf("Unable to load image %s! SDL_Error: %s\n", path.c_str(), SDL_GetError());
+	} else {
+		optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format, 0);
+		if(optimizedSurface == NULL) {
+			printf("Unable to optimize image %s! SDL_Error: %s\n", path.c_str(), SDL_GetError());
+		}
+		SDL_FreeSurface(loadedSurface);
 	}
-	return loadedSurface;
+	return optimizedSurface;
 }
 
 bool loadMedia() {
@@ -136,7 +144,13 @@ int main( int argc, char* args[] )
 						}
 					}
 				}
-				SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+				SDL_Rect stretchRect;
+				stretchRect.x = 0;
+				stretchRect.y = 0;
+				stretchRect.w = SCREEN_WIDTH;
+				stretchRect.h = SCREEN_HEIGHT;
+
+				SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
 				SDL_UpdateWindowSurface(gWindow);
 			}
 		}
